@@ -1,97 +1,75 @@
-// khai b�o require module evilscan
+// khai báo require module evilscan
 var evilscan = require('evilscan')
-// khai b�o require module express
+// khai báo require module express
 ,   express = require('express');
 
-// kh?i t?o ?ng d?ng express
+// khởi tạo ứng dụng express
 var app = express();
 
-
-// read file
-var readline = require('readline');
-var fileName = 'req-res_out.txt';
-var http = require('http')
-    , url = require('url')
-    , fs = require('fs')
-    , USERNAME = '/huyttq/'
-    , layout = '/layouts'
-    , device = '/accessories/0x0000'
-    , group = '/groups'
-    , preset = '/presets'
-    , event = '/events';
-
-var flgInit = true;
-var LineArr = fs.readFileSync(fileName)
-    .toString()
-    .split("\n");
-
-
-function sleep(mili){
-
-	var start = new Date().getTime();
-	for(;;){
-		if((new Date().getTime() - start) > mili){
-			break;
-		}
+// ứng dụng port-scanning tự giới thiệu về mình
+app.get(function(req, res){
+if(req.URL == "/"){
+  res.send('<h1>Tui tên là port-scanning.<br>'+
+    'Tui chạy rất nhanh và rất nguy hiểm.<br>'+
+    '<a href="http://vietjs.com/?p=9">http://vietjs.com/2014/06/01/quet-cong-mang-sieu-nhanh-su-dung-node-js/</a></h1>');
 	}
-}
+	else{
+	res.send('<h1>Tui tên là port-scanning11111111111111.<br>'+
+    'Tui chạy rất nhanh và rất nguy hiểm.<br>'+
+    '<a href="http://vietjs.com/?p=9">http://vietjs.com/2014/06/01/quet-cong-mang-sieu-nhanh-su-dung-node-js/</a></h1>');
+	}
+});
 
-// ?ng d?ng port-scanning t? gi?i thi?u v? m�nh
-app.get('/', function(req, res){
-	 if (req.method == 'POST') {
-        var body = '';
+// ứng dụng port-scanning làm việc 
+app.get('/port/scan', function (req, res) {
+  var ips = req.query.ip
+  ,   ports = req.query.port
+  ,   options = {}
+  ,   results = [];
 
-        req.on('data', function (data) {
-            body += data;
-        });
+  // kiểm tra lỗi và trả về thông báo khi thiếu thông tin
+  if (!ips || !ports) {
+    res.send(400, 'Missing ip or port params. Correctly URL is /port/scan?ip=192.168.0.1&port=22');
+    return;
+  }
 
-        req.on('end', function () {
-		    if(body == '{"pass":"a"}' ||body == 'pass=a' ){
-				res.statusCode = 200;
-				sleep(1000);
-				res.end();
-			}
-			else{
-				res.statusCode = 404;
-				sleep(1000);
-				res.end();
-			}
-        });
-    }else if (req.url.indexOf(USERNAME) == -1) {
-        if (flgInit) {
-            flgInit = false;
-        }
-        var str_Req = req.url;
-        urlSubReq = str_Req;
-		sleep(1000);
-        res.writeHead(200, {
-            'Content-Type': 'application/json'
-        });
+  // khai báo options cho evilscan
+  // xem thông tin đầy đủ tại https://github.com/eviltik/evilscan
+  options = {
+    target: ips, // địa chỉ IP, dãy IP
+    port: ports, // cổng
+    status:'TROU', // ?
+    banner: true, // hiển thị biểu ngữ của cổng kết nối
+    concurrency: 255, // số lượng kết nối đồng thời
+    timeout: 2000, // thời gian chờ kết nối (ms)
+    geo: true, // xác định vị trí địa lý của địa chỉ IP
+    reverse: true // hiển thị thông tin reverse dns
+  };;
 
-        if (urlSubReq.indexOf('/0x') > -1) {
-            // res detail
-            for (i = 0; i < LineArr.length; i++) {
-                if (LineArr[i].indexOf(urlSubReq) > -1) {
-                    res.write(LineArr[i + 1]);
-                    break;
-                }
-            }
-        } else {
-            // main page
-            for (i = 0; i < LineArr.length; i++) {
-                if ((LineArr[i].indexOf(urlSubReq) > -1) && (LineArr[i].indexOf('0x') == -1)) {
-                    res.write(LineArr[i + 1]);
-                    break;
-                }
-            }
-        }
-        res.end();
+  // khởi tạo evilscan scanner
+  var scanner = new evilscan(options, function () {
+    // khởi tạo xong scanner
+  });
+    
+  // khi quét có kết quả, lưu kết quả vào biến results
+  scanner.on('result', function (data) {
+    results.push(data);
+  });
 
-    } else {
-        res.statusCode = 404;
-        res.end();
-    }
+  // khi có lỗi, trả về thông báo lỗi
+  scanner.on('error', function (err) {
+    res.send(500, 'evilscan error: ' + err);
+  });
+
+  // khi quét xong, kết thúc xử lý cho truy vấn này và trả về kết quả
+  scanner.on('done', function () {
+    res.send(results);
+  });
+
+  // chạy evilscan scanner
+  scanner.run();
 });
 
 var HTTP_PORT = process.env.PORT || 3000;
 app.listen(HTTP_PORT);
+console.log('port-scanning application listening at 0.0.0.0:' + HTTP_PORT);
