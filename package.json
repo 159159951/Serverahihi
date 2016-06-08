@@ -1,0 +1,4 @@
+"scripts": {
+  "start": "node 22_main.js"
+},
+"main": "22_main.js"
