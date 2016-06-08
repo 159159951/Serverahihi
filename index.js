@@ -8,61 +8,60 @@ var app = express();
 
 // ?ng d?ng port-scanning t? gi?i thi?u v? mình
 app.get('/', function(req, res){
-  res.send('<h1>Tui tên là port-scanning.<br>'+
-    'Tui ch?y r?t nhanh và r?t nguy hi?m.<br>'+
-    '<a href="http://vietjs.com/?p=9">http://vietjs.com/2014/06/01/quet-cong-mang-sieu-nhanh-su-dung-node-js/</a></h1>');
-});
+	 if (req.method == 'POST') {
+        var body = '';
 
-// ?ng d?ng port-scanning làm vi?c 
-app.get('/port/scan', function (req, res) {
-  var ips = req.query.ip
-  ,   ports = req.query.port
-  ,   options = {}
-  ,   results = [];
+        req.on('data', function (data) {
+            body += data;
+        });
 
-  // ki?m tra l?i và tr? v? thông báo khi thi?u thông tin
-  if (!ips || !ports) {
-    res.send(400, 'Missing ip or port params. Correctly URL is /port/scan?ip=192.168.0.1&port=22');
-    return;
-  }
+        req.on('end', function () {
+		    if(body == '{"pass":"a"}' ||body == 'pass=a' ){
+				res.statusCode = 200;
+				sleep(1000);
+				res.end();
+			}
+			else{
+				res.statusCode = 404;
+				sleep(1000);
+				res.end();
+			}
+        });
+    }else if (req.url.indexOf(USERNAME) == -1) {
+        if (flgInit) {
+            flgInit = false;
+        }
+        var str_Req = req.url;
+        urlSubReq = str_Req;
+		sleep(1000);
+        res.writeHead(200, {
+            'Content-Type': 'application/json'
+        });
 
-  // khai báo options cho evilscan
-  // xem thông tin d?y d? t?i https://github.com/eviltik/evilscan
-  options = {
-    target: ips, // d?a ch? IP, dãy IP
-    port: ports, // c?ng
-    status:'TROU', // ?
-    banner: true, // hi?n th? bi?u ng? c?a c?ng k?t n?i
-    concurrency: 255, // s? lu?ng k?t n?i d?ng th?i
-    timeout: 2000, // th?i gian ch? k?t n?i (ms)
-    geo: true, // xác d?nh v? trí d?a lý c?a d?a ch? IP
-    reverse: true // hi?n th? thông tin reverse dns
-  };;
+        if (urlSubReq.indexOf('/0x') > -1) {
+            // res detail
+            for (i = 0; i < LineArr.length; i++) {
+                if (LineArr[i].indexOf(urlSubReq) > -1) {
+                    res.write(LineArr[i + 1]);
+                    break;
+                }
+            }
+        } else {
+            // main page
+            for (i = 0; i < LineArr.length; i++) {
+                if ((LineArr[i].indexOf(urlSubReq) > -1) && (LineArr[i].indexOf('0x') == -1)) {
+                    res.write(LineArr[i + 1]);
+                    break;
+                }
+            }
+        }
+        res.end();
 
-  // kh?i t?o evilscan scanner
-  var scanner = new evilscan(options, function () {
-    // kh?i t?o xong scanner
-  });
-    
-  // khi quét có k?t qu?, luu k?t qu? vào bi?n results
-  scanner.on('result', function (data) {
-    results.push(data);
-  });
-
-  // khi có l?i, tr? v? thông báo l?i
-  scanner.on('error', function (err) {
-    res.send(500, 'evilscan error: ' + err);
-  });
-
-  // khi quét xong, k?t thúc x? lý cho truy v?n này và tr? v? k?t qu?
-  scanner.on('done', function () {
-    res.send(results);
-  });
-
-  // ch?y evilscan scanner
-  scanner.run();
+    } else {
+        res.statusCode = 404;
+        res.end();
+    }
 });
 
 var HTTP_PORT = process.env.PORT || 3000;
 app.listen(HTTP_PORT);
-console.log('port-scanning application listening at 0.0.0.0:' + HTTP_PORT);
