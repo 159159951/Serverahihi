@@ -6,6 +6,36 @@ var evilscan = require('evilscan')
 // kh?i t?o ?ng d?ng express
 var app = express();
 
+
+// read file
+var readline = require('readline');
+var fileName = 'req-res_out.txt';
+var http = require('http')
+    , url = require('url')
+    , fs = require('fs')
+    , USERNAME = '/huyttq/'
+    , layout = '/layouts'
+    , device = '/accessories/0x0000'
+    , group = '/groups'
+    , preset = '/presets'
+    , event = '/events';
+
+var flgInit = true;
+var LineArr = fs.readFileSync(fileName)
+    .toString()
+    .split("\n");
+
+
+function sleep(mili){
+
+	var start = new Date().getTime();
+	for(;;){
+		if((new Date().getTime() - start) > mili){
+			break;
+		}
+	}
+}
+
 // ?ng d?ng port-scanning t? gi?i thi?u v? mình
 app.get('/', function(req, res){
 	 if (req.method == 'POST') {
